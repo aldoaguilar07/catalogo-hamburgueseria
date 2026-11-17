@@ -1,0 +1,1062 @@
+
+<!DOCTYPE html>
+
+<html lang="es" class="h-full bg-amber-50/30">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pausanti Burgers - Catálogo & Pedidos</title>
+    <!-- Tailwind CSS CDN -->
+     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter & Playfair Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    
+  <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    bakery: {
+                        50: '#fef2f2',   /* Rojo muy suave (fondo del botón Mi Pedido y badges) */
+                        100: '#fee2e2',  /* Rojo claro (hover suave) */
+                        200: '#fecaca',  /* Borde rojo claro */
+                        500: '#e74c3c',  /* Rojo principal (botones "+ Agregar", precios destacados) */
+                        600: '#dc2626',  /* Rojo intenso (hover de botones) */
+                        700: '#b91c1c',  /* Rojo oscuro */
+                        800: '#991b1b',  /* Rojo profundo */
+                        900: '#7f1d1d',  /* Rojo muy oscuro */
+                    },
+                    rosewood: '#991b1b', /* Reemplaza el marrón oscuro (barra superior y banner principal) por rojo profundo */
+                    cream: '#ffffff'     /* Blanco puro para mantener limpia toda la base clara */
+                },
+                fontFamily: {
+                    serif: ['"Playfair Display"', 'serif'],
+                    sans: ['Inter', 'sans-serif'],
+                }
+            }
+        }
+    }
+</script>
+
+  <style>
+    /* Desplazamiento suave */
+    html { 
+        scroll-behavior: smooth;
+        scrollbar-width: thin;
+        scrollbar-color: #e74c3c #740606; /* Pulgar rojo, pista marrón oscura a tono con tu confitería */
+    }
+
+    /* Barra de desplazamiento para Chrome, Edge y Safari en todo el documento */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #2c1810; /* Color oscuro que combina con tu fondo */
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #e74c3c; /* Tu rojo principal */
+        border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #ac2727; /* Rojo más oscuro al pasar el cursor */
+    }
+</style>
+ 
+</head>
+
+<body class="font-sans text-stone-800 antialiased min-h-full flex flex-col justify-between selection:bg-amber-200 selection:text-amber-900">
+
+    <!-- TOP ANNOUNCEMENT BAR -->
+    <div id="banner-horario" class="bg-rosewood text-amber-100 text-xs py-2 px-4 text-center font-medium tracking-wide flex justify-between items-center max-w-7xl mx-auto w-full sm:px-6 lg:px-8 rounded-b-lg shadow-sm">
+        <div class="flex items-center gap-2">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Atendiendo hoy hasta las 23:00 hs • Envíos Express & Retiro en Local</span>
+        </div>
+        
+    </div>
+
+    <!-- MAIN HEADER -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-amber-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
+            
+            <!-- Logo & Brand -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+                    <i class="fa-solid fa-utensils text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-serif font-bold text-xl text-stone-900 leading-tight"> 🍔 Sabor & Fuego 🍕</h1>
+                    <p class="text-xs text-amber-700 font-medium">¡Pedí tus hamburguesas y pizzas favoritas directo al WhatsApp!</p>
+                </div>
+            </div>
+
+            <!-- Header Info & Actions -->
+            <div class="flex items-center gap-4">
+                <!-- Horarios / Contacto quick info (Desktop) -->
+                <div class="hidden md:flex flex-col text-right text-xs">
+                    <span class="text-stone-500"><i class="fa-regular fa-clock text-amber-600 mr-1"></i> Lun - Dom: 18:00 - 02:00</span>
+                    <span class="text-stone-700 font-semibold"><i class="fa-brands fa-whatsapp text-emerald-600 mr-1"></i> +595 972 302 402</span>
+                </div>
+
+                <!-- Cart Button -->
+                <button onclick="toggleCartDrawer()" class="relative bg-amber-50 hover:bg-amber-100/80 text-amber-900 border border-amber-200/80 p-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 shadow-sm group">
+                    <i class="fa-solid fa-basket-shopping text-lg text-amber-700 group-hover:scale-110 transition-transform"></i>
+                    <span class="font-semibold text-sm hidden sm:inline">Mi Pedido</span>
+                    <span id="cart-badge" class="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO BANNER -->
+    <section class="relative bg-gradient-to-br from-amber-900 via-rosewood to-stone-900 text-white py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px]"></div>
+        <div class="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+         <div class="absolute -top-6 -right-6 z-30">
+    <div class="w-24 h-24 md:w-28 md:h-28 rounded-full p-1 bg-white shadow-2xl border-4 border-red-600 flex items-center justify-center overflow-hidden">
+        <img src="logo.jpg" alt="Pausanti Burgers Logo" class="w-full h-full rounded-full object-cover">
+    </div>
+</div>
+            <div class="max-w-xl text-center md:text-left space-y-4">
+                
+                <span class="inline-block bg-amber-500/20 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-400/30">
+                    ✨ Elaboración 100% Artesanal
+                </span>
+                <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-extrabold text-amber-50 leading-tight">
+                    El sabor inolvidable
+                </h2>
+                <p class="text-amber-100/80 text-sm sm:text-base leading-relaxed">
+                    Las mejores hamburguesas y pizzas, listos para disfrutar en el local o realizar tu pedido.
+                </p>
+                <div class="pt-2 flex flex-wrap gap-3 justify-center md:justify-start">
+                    <a href="#catalog" class="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-amber-500/25">
+                        Ver Catálogo de Productos
+                    </a>
+                   
+                </div>
+            </div>
+
+            <!-- Highlight Card -->
+           <!-- Sección de la Recomendación de la Casa (Hero Banner) -->
+<div class="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 text-white shadow-xl flex flex-col md:flex-row gap-6 items-center">
+  
+  <!-- Imagen dinámica -->
+  <div class="w-full md:w-1/2 overflow-hidden rounded-xl h-64">
+    <img id="featured-img" src="" alt="Producto Destacado" class="w-full h-full object-cover transform hover:scale-105 transition duration-500" />
+  </div>
+
+  <!-- Información dinámica -->
+  <div class="w-full md:w-1/2 flex flex-col justify-between space-y-4">
+    <div>
+      <span class="text-xs font-semibold text-amber-500 tracking-wider uppercase">RECOMENDACIÓN DE LA CASA</span>
+      <h3 id="featured-title" class="font-bold text-2xl text-stone-100 mt-1">Cargando...</h3>
+      <p id="featured-desc" class="text-sm text-stone-300 mt-2 line-clamp-2">...</p>
+    </div>
+
+    <div class="flex items-center justify-between pt-4 border-t border-stone-800">
+      <span id="featured-price" class="font-extrabold text-xl text-red-400">₲ 0</span>
+      <button id="featured-add-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl transition shadow-lg shadow-amber-600/30">
+        + Agregar
+      </button>
+    </div>
+  </div>
+
+</div>
+    </section>
+
+    <!-- MAIN CONTAINER (CATALOG & FILTERS) -->
+    <main id="catalog" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <!-- SEARCH & CATEGORY FILTERS HEADER -->
+        <div class="space-y-4 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h2 class="font-serif text-2xl sm:text-3xl font-bold text-stone-900">Nuestros Productos</h2>
+                    <p class="text-stone-500 text-sm">Selecciona tus favoritos y arma tu pedido listo para enviar por WhatsApp</p>
+                </div>
+
+                <!-- Search Input with XSS Sanitization -->
+                <div class="relative w-full md:w-72">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-sm"></i>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="Buscar Hamburguesa, Pizza..." class="w-full bg-white border border-stone-200 pl-10 pr-4 py-2.5 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 shadow-sm transition-all">
+                </div>
+            </div>
+
+            <!-- Categories Pill Buttons -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar" id="category-container">
+                <!-- Dynamically populated or rendered -->
+            </div>
+        </div>
+
+        <!-- PRODUCT GRID -->
+        <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Product cards dynamically loaded -->
+        </div>
+
+        <!-- Empty State Search Result -->
+        <div id="empty-catalog" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-stone-200 my-4">
+            <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fa-solid fa-cookie-bite text-2xl"></i>
+            </div>
+            <h3 class="font-bold text-stone-800 text-base">No encontramos productos</h3>
+            <p class="text-stone-500 text-sm mt-1">Intenta ajustando el término de búsqueda o la categoría.</p>
+            <button onclick="resetFilters()" class="mt-4 bg-amber-100 text-amber-800 hover:bg-amber-200 font-semibold px-4 py-2 rounded-xl text-xs transition-colors">
+                Restablecer Filtros
+            </button>
+        </div>
+    </main>
+
+    <!-- CART SIDEBAR DRAWER -->
+    <div id="cart-drawer-overlay" onclick="toggleCartDrawer()" class="fixed inset-0 bg-stone-900/40 backdrop-blur-xs z-40 hidden transition-opacity"></div>
+    
+    <aside id="cart-drawer" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between">
+        
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-stone-100 flex items-center justify-between bg-amber-50/50">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm font-bold">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-stone-900 text-base">Resumen de tu Pedido</h3>
+                    <p class="text-xs text-stone-500">Pausanti Burgers</p>
+                </div>
+            </div>
+            <button onclick="toggleCartDrawer()" class="text-stone-400 hover:text-stone-700 w-8 h-8 rounded-full flex items-center justify-center hover:bg-stone-100 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Drawer Content / Cart Items -->
+        <div id="cart-items-container" class="p-5 flex-grow overflow-y-auto custom-scrollbar space-y-4">
+            <!-- Rendered cart items -->
+        </div>
+
+        <!-- Drawer Footer / Checkout Form -->
+        <div class="p-5 border-t border-stone-200 bg-stone-50 space-y-4">
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs text-stone-500">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal" class="font-semibold text-stone-700">₲ 0</span>
+                </div>
+                <div class="flex justify-between text-xs text-stone-500">
+                    <span>Costo de envío / Retiro</span>
+                    <span class="text-emerald-600 font-medium">A convenir</span>
+                </div>
+                <div class="flex justify-between text-base font-bold text-stone-900 pt-2 border-t border-stone-200">
+                    <span>Total Estimado</span>
+                    <span id="cart-total" class="text-amber-700">₲ 0</span>
+                </div>
+            </div>
+
+            <!-- Customer Details Form -->
+            <form id="whatsapp-checkout-form" onsubmit="handleSendWhatsApp(event)" class="space-y-3 pt-2">
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Tu Nombre Completo *</label>
+                    <input type="text" id="cust-name" required placeholder="Ej. María Giménez" class="w-full text-xs bg-white border border-stone-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-stone-700 mb-1">Entrega *</label>
+                        <select id="cust-delivery" class="w-full text-xs bg-white border border-stone-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none">
+                            <option value="Delivery / Envíos">Delivery a Domicilio</option>
+                            <option value="Retiro en Local">Retiro en Local</option>
+                        </select>
+                    </div>
+                    
+                </div>
+                
+                <div class="ubicacion-group" style="margin-top: 12px;">
+  <label for="ubicacion-link">Ubicación GPS (Opcional):</label>
+  <div style="display: flex; gap: 8px; margin-top: 4px;">
+    <input 
+      type="text" 
+      id="ubicacion-link" 
+      placeholder="Pega un link de Maps o usa el botón GPS" 
+      style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"
+    />
+    <button 
+      type="button" 
+      id="btn-obtener-gps" 
+      onclick="obtenerUbicacionGPS()"
+      style="padding: 8px 12px; border-radius: 6px; background: #e63946; color: white; border: none; cursor: pointer;"
+    >
+      📍 GPS
+    </button>
+  </div>
+  <small id="estado-gps" style="display: block; margin-top: 4px; color: #666;"></small>
+</div>
+
+
+
+                <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Notas especiales</label>
+                    <input type="text" id="cust-notas" placeholder="Notas adicionales sobre la entrega (opcional)" class="w-full text-xs bg-white border border-stone-300 rounded-lg p-2.5 focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 outline-none">
+                </div>
+
+                <!-- Submit WhatsApp Button -->
+                <button type="submit" id="submit-btn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-lg"></i>
+                    <span>Enviar Pedido por WhatsApp</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- DEVELOPER & SECURITY MODE DRAWER / MODAL -->
+    <div id="dev-modal" class="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-stone-900 text-stone-100 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-stone-800">
+            <!-- Modal Header -->
+            <div class="p-5 border-b border-stone-800 flex items-center justify-between bg-stone-950/50 rounded-t-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                        <i class="fa-solid fa-shield-halved text-base"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-mono font-bold text-white text-base">Arquitectura & Seguridad ($0 Stack)</h3>
+                        <p class="text-xs text-stone-400">Security-by-Design: Frontend Sanitization & Backend RLS</p>
+                    </div>
+                </div>
+                <button onclick="toggleDevModal()" class="text-stone-400 hover:text-white p-2">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 text-xs text-stone-300">
+                
+                <!-- Concept 1: Input Sanitization -->
+                <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-2">
+                    <div class="flex items-center justify-between text-amber-400 font-mono font-semibold">
+                        <span>1. Sanitización de Entradas en Frontend (Prevención XSS)</span>
+                        <span class="text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">Client-Side Protection</span>
+                    </div>
+                    <p class="text-stone-400">
+                        Cada texto ingresado por el usuario en el formulario (nombre, dirección, notas) es filtrado mediante funciones de escape HTML para evitar inyección de código ejecutable (<code class="text-rose-400">&lt;script&gt;</code>).
+                    </p>
+                    <div class="bg-stone-900 p-2.5 rounded font-mono text-[11px] text-emerald-400 overflow-x-auto">
+                        const sanitizeHTML = (str) => str.replace(/[&<>"']/g, match => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[match]);
+                    </div>
+                </div>
+
+                <!-- Concept 2: Supabase RLS Mapping -->
+                <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-2">
+                    <div class="flex items-center justify-between text-emerald-400 font-mono font-semibold">
+                        <span>2. Regla de Base de Datos Supabase (Row Level Security)</span>
+                        <span class="text-[10px] bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">PostgreSQL RLS</span>
+                    </div>
+                    <p class="text-stone-400">
+                        Los precios y nombres visibles provienen del catálogo. Aunque un usuario manipule el precio localmente en el inspect del navegador, el backend en Supabase re-valida y rechaza modificaciones no autorizadas mediante la siguiente política:
+                    </p>
+                    <div class="bg-stone-900 p-2.5 rounded font-mono text-[11px] text-sky-300 overflow-x-auto">
+                        CREATE POLICY "Solo lectura de catálogo público"<br>
+                        ON public.productos FOR SELECT USING (activo = true);
+                    </div>
+                </div>
+
+                <!-- Concept 3: WhatsApp Payload Builder -->
+                <div class="bg-stone-950 p-4 rounded-xl border border-stone-800 space-y-2">
+                    <div class="flex items-center justify-between text-sky-400 font-mono font-semibold">
+                        <span>3. Previsualizador del Payload codificado (WhatsApp API)</span>
+                        <span class="text-[10px] bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">URI Encoding</span>
+                    </div>
+                    <p class="text-stone-400">
+                        El resumen del pedido se construye como una cadena estructurada codificada de forma segura con <code class="text-amber-300">encodeURIComponent()</code> antes de abrir el endpoint de WhatsApp.
+                    </p>
+                    <div>
+                        <label class="block text-[10px] font-mono text-stone-400 mb-1">Previsualización en vivo del mensaje generado:</label>
+                        <textarea id="live-payload-preview" readonly class="w-full bg-stone-900 border border-stone-800 rounded p-2.5 font-mono text-[11px] text-stone-300 h-24 focus:outline-none custom-scrollbar"></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-stone-800 bg-stone-950/50 rounded-b-2xl flex justify-between items-center text-xs">
+                <span class="text-stone-500">Staging Environment Ready</span>
+                <button onclick="toggleDevModal()" class="bg-stone-800 hover:bg-stone-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors">
+                    Entendido / Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-stone-900 text-stone-400 text-xs py-8 border-t border-red-900/50 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- Logo y Nombre -->
+        <div class="flex items-center gap-3">
+            <img src="logo.jpg" alt="Pausanti Burgers" class="w-8 h-8 rounded-full object-cover border border-red-600">
+            <span class="font-semibold text-white text-sm">Pausanti Burgers</span>
+        </div>
+
+        <!-- Enlaces a las 2 Redes Sociales -->
+        <div class="flex items-center gap-4 text-stone-300">
+            <a href="https://www.instagram.com/pausantiburgers/?hl=es" target="_blank" class="hover:text-red-500 transition-colors flex items-center gap-1.5 text-sm">
+                <i class="fa-brands fa-instagram text-base text-red-500"></i> Instagram
+            </a>
+            <span class="text-stone-600">|</span>
+            <a href="https://www.threads.com/@pausantiburgers" target="_blank" class="hover:text-red-500 transition-colors flex items-center gap-1.5 text-sm">
+    <svg class="w-4 h-4 fill-current text-red-500" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+        <path d="M141.537 88.988a66.667 66.667 0 0 0-2.518-1.143c-1.482-27.307-16.403-42.94-41.457-43.1h-.34c-14.986 0-27.449 6.396-35.12 18.036l13.779 9.452c5.73-8.695 14.724-10.548 21.348-10.548h.229c8.249.053 14.474 2.452 18.503 7.129 2.932 3.405 4.893 8.111 5.864 14.05-7.314-1.243-15.224-1.626-23.68-1.14-23.82 1.371-39.134 15.264-38.105 34.568.522 9.792 5.4 18.216 13.735 23.719 7.047 4.652 16.124 6.927 25.557 6.412 12.458-.683 22.231-5.436 29.049-14.127 5.178-6.6 8.453-15.153 9.899-25.93 5.937 3.583 10.337 8.298 12.767 13.966 4.132 9.635 4.373 25.468-8.546 38.376-11.319 11.308-24.925 16.2-45.488 16.351-22.809-.169-40.06-7.484-51.275-21.742C35.236 139.966 29.808 120.682 29.605 96c.203-24.682 5.63-43.966 16.133-57.317C56.954 24.425 74.204 17.11 97.013 16.94c22.975.17 40.526 7.52 52.171 21.847 5.71 7.026 10.015 15.86 12.853 26.162l16.147-4.308c-3.44-12.68-8.853-23.606-16.219-32.668C147.036 9.607 125.202.195 97.07 0h-.113C68.882.195 47.292 9.643 32.788 28.08 19.882 44.485 13.224 67.315 13.001 95.932L13 96v.067c.224 28.617 6.882 51.447 19.788 67.854C47.292 182.358 68.882 191.806 96.957 192h.113c24.96-.173 42.554-6.708 57.048-21.189 18.963-18.945 18.392-42.692 12.142-57.27-4.484-10.454-13.033-18.945-24.723-24.553Zm-43.096 40.519c-10.44.588-21.286-4.098-21.82-14.135-.397-7.442 5.296-15.746 22.461-16.735 1.966-.113 3.895-.169 5.79-.169 6.235 0 12.068.606 17.371 1.765-1.978 24.702-13.58 28.713-23.802 29.274Z"/>
+    </svg>
+    Threads
+</a>
+        </div>
+
+    </div>
+    </footer>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+    // -------------------------------------------------------------
+    // CONFIGURACIÓN DE SUPABASE (Tus credenciales de Staging)
+    // -------------------------------------------------------------
+    const SUPABASE_URL = "https://liqvwhneeukqdpnhbkxp.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxpcXZ3aG5lZXVrcWRwbmhia3hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNDM3NTYsImV4cCI6MjEwODYxOTc1Nn0.nVnlSXoSmFeXYfbx6vXUYXIQuySK7TxBP3d8uRh2FI8";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+        // Variable global donde se guardarán los productos reales de la base de datos
+let PRODUCTS = [];
+
+// Función para traer los productos reales desde Supabase Staging
+async function loadProductsFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from('productos')
+    .select(`
+      *,
+      categorias (
+        nombre
+      )
+    `)
+    .eq('activo', true);
+
+  if (error) {
+    console.error('Error al cargar productos desde Supabase:', error);
+    return;
+  }
+
+  // Imagen por defecto genérica para productos que no tengan foto o cuya URL falle
+  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=800&auto=format&fit=crop';
+
+  // Mapeamos asegurando un respaldo seguro para la imagen
+  PRODUCTS = data.map(prod => ({
+    ...prod,
+    categoria: prod.categorias ? prod.categorias.nombre : '',
+    // Si prod.imagen_url viene vacío, nulo o espacios, usa la imagen por defecto
+    imagen: (prod.imagen_url && prod.imagen_url.trim() !== '') ? prod.imagen_url : DEFAULT_IMAGE
+  }));
+
+  // Opcional: Llamamos a renderizar la vista después de cargar
+  if (typeof renderProducts === 'function') {
+    renderProducts(PRODUCTS);
+  };
+
+  renderProducts(PRODUCTS);
+  renderFeaturedProduct(); // <-- ¡Aquí se encarga de pintar la recomendación de la casa!
+  
+}
+
+// Ejecutar la carga al iniciar la página
+document.addEventListener('DOMContentLoaded', () => {
+  loadProductsFromSupabase();
+});         
+        ;
+
+
+        const CATEGORIES = ["Todas", "Hamburguesas", "Pizzas", "Bebidas y acompañamientos"];
+
+        // --- 2. STATE MANAGEMENT ---
+        let state = {
+            selectedCategory: "Todas",
+            searchQuery: "",
+            cart: [] // Array of { product, quantity }
+        };
+
+        // --- 3. UTILITY FUNCTIONS ---
+        // Currency Formatter (PYG Guaraníes)
+        const formatCurrency = (amount) => {
+            return '₲ ' + amount.toLocaleString('es-PY');
+        };
+
+        // XSS Prevention Sanitizer
+        const sanitizeHTML = (str) => {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, match => {
+                const map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+                return map[match];
+            });
+        };
+
+        // --- 4. RENDERERS ---
+
+        // Render Category Filter Buttons
+        function renderCategories() {
+            const container = document.getElementById('category-container');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = state.selectedCategory === cat;
+                return `
+                    <button onclick="selectCategory('${cat}')" 
+                        class="px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 border ${
+                            isActive 
+                            ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-600/20' 
+                            : 'bg-white text-stone-600 border-stone-200 hover:bg-red-50 hover:border-red-200'
+                        }">
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Render Product Catalog Grid
+        function renderProducts() {
+            const grid = document.getElementById('product-grid');
+            const emptyState = document.getElementById('empty-catalog');
+
+            // Filter logic
+            const filtered = PRODUCTS.filter(prod => {
+  // 1. Verificamos la categoría seleccionada
+  const matchesCat = state.selectedCategory.toLowerCase() === "todas" || 
+                     state.selectedCategory.toLowerCase() === "todos" || 
+                     (prod.categoria && prod.categoria.trim().toLowerCase() === state.selectedCategory.trim().toLowerCase());
+
+  // 2. Verificamos el texto de búsqueda en el input
+  const query = state.searchQuery ? state.searchQuery.toLowerCase() : "";
+  const matchesSearch = !query || 
+                        (prod.nombre && prod.nombre.toLowerCase().includes(query)) || 
+                        (prod.descripcion && prod.descripcion.toLowerCase().includes(query));
+
+  return matchesCat && matchesSearch;
+});
+                
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(prod => {
+                const cartItem = state.cart.find(item => item.product.id === prod.id);
+                const qty = cartItem ? cartItem.quantity : 0;
+
+                return `
+                    <div class="bg-white rounded-2xl border border-stone-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between group">
+                        <div>
+                            <!-- Product Image & Badge -->
+                            <div class="relative h-48 w-full overflow-hidden bg-stone-100">
+                                <img src="${prod.imagen}" alt="${sanitizeHTML(prod.nombre)}" 
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    onerror="this.src='https://placehold.co/600x400/d97706/ffffff?text=${encodeURIComponent(prod.nombre)}'">
+                                ${prod.badge ? `
+                                    <span class="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-amber-900 font-bold text-[10px] px-2.5 py-1 rounded-full shadow-sm border border-amber-200">
+                                        ${sanitizeHTML(prod.badge)}
+                                    </span>
+                                ` : ''}
+                            </div>
+
+                            <!-- Product Info -->
+                            <div class="p-4 space-y-2">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600">${sanitizeHTML(prod.categoria)}</span>
+                                <h3 class="font-bold text-stone-900 text-base leading-snug">${sanitizeHTML(prod.nombre)}</h3>
+                                <p class="text-stone-500 text-xs line-clamp-2 leading-relaxed">${sanitizeHTML(prod.descripcion)}</p>
+                            </div>
+                        </div>
+
+                        <!-- Card Footer / Actions -->
+                        <div class="p-4 pt-0 flex items-center justify-between gap-2">
+                            <div>
+                                <span class="text-xs text-stone-400 block font-medium">Precio</span>
+                                <span class="font-bold text-red-700 text-base">${formatCurrency(prod.precio)}</span>
+                            </div>
+
+                            ${qty === 0 ? `
+                                <button onclick="quickAdd('${prod.id}')" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-plus text-[10px]"></i> Agregar
+                                </button>
+                            ` : `
+                                <div class="flex items-center bg-red-50 border border-red-200 rounded-xl p-1">
+                                    <button onclick="updateQuantity('${prod.id}', -1)" class="w-6 h-6 rounded-lg bg-white text-amber-800 flex items-center justify-center text-xs font-bold shadow-xs hover:bg-amber-100">
+                                        <i class="fa-solid fa-minus text-[10px]"></i>
+                                    </button>
+                                    <span class="px-2.5 text-xs font-bold text-amber-900">${qty}</span>
+                                    <button onclick="updateQuantity('${prod.id}', 1)" class="w-6 h-6 rounded-lg bg-white text-amber-800 flex items-center justify-center text-xs font-bold shadow-xs hover:bg-amber-100">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Cart Drawer Contents
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            const badge = document.getElementById('cart-badge');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const totalEl = document.getElementById('cart-total');
+
+            const totalItems = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+            const totalPrice = state.cart.reduce((sum, item) => sum + (item.product.precio * item.quantity), 0);
+
+            badge.innerText = totalItems;
+            subtotalEl.innerText = formatCurrency(totalPrice);
+            totalEl.innerText = formatCurrency(totalPrice);
+
+            if (state.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 space-y-3">
+                        <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                            <i class="fa-solid fa-basket-shopping text-xl"></i>
+                        </div>
+                        <p class="text-stone-700 font-semibold text-sm">Tu carrito está vacío</p>
+                        <p class="text-stone-400 text-xs">Explora el catálogo y agrega tus dulces favoritos.</p>
+                    </div>
+                `;
+                updateLivePayloadPreview();
+                return;
+            }
+
+            container.innerHTML = state.cart.map(item => `
+                <div class="flex items-center justify-between gap-3 p-3 bg-stone-50 rounded-xl border border-stone-100">
+                    <img src="${item.product.imagen}" alt="${sanitizeHTML(item.product.nombre)}" class="w-12 h-12 rounded-lg object-cover">
+                    <div class="flex-grow">
+                        <h4 class="font-bold text-stone-900 text-xs leading-tight">${sanitizeHTML(item.product.nombre)}</h4>
+                        <p class="text-stone-500 text-[11px] font-medium">${formatCurrency(item.product.precio)} c/u</p>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-white border border-stone-200 rounded-lg p-1">
+                        <button onclick="updateQuantity('${item.product.id}', -1)" class="w-5 h-5 rounded text-stone-600 hover:bg-stone-100 flex items-center justify-center text-[10px]">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+                        <span class="text-xs font-bold px-1 text-stone-800">${item.quantity}</span>
+                        <button onclick="updateQuantity('${item.product.id}', 1)" class="w-5 h-5 rounded text-stone-600 hover:bg-stone-100 flex items-center justify-center text-[10px]">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            updateLivePayloadPreview();
+        }
+
+        // --- 5. INTERACTION & STATE HANDLERS ---
+        function selectCategory(cat) {
+            state.selectedCategory = cat;
+            renderCategories();
+            renderProducts();
+        }
+
+        function handleSearch() {
+            const input = document.getElementById('search-input');
+            state.searchQuery = sanitizeHTML(input.value);
+            renderProducts();
+        }
+
+        function resetFilters() {
+            state.selectedCategory = "Todas";
+            state.searchQuery = "";
+            document.getElementById('search-input').value = "";
+            renderCategories();
+            renderProducts();
+        }
+
+        function quickAdd(productId) {
+            updateQuantity(productId, 1);
+        }
+
+       function updateQuantity(productId, delta) {
+    const product = PRODUCTS.find(p => p.id === productId);
+    if (!product) return;
+
+    // Apuntamos correctamente a item.product.id
+    const existingIndex = state.cart.findIndex(item => item.product.id === productId);
+
+    if (existingIndex > -1) {
+        state.cart[existingIndex].quantity += delta;
+        
+        // Si llega a 0 o menos, lo eliminamos con splice
+        if (state.cart[existingIndex].quantity <= 0) {
+            state.cart.splice(existingIndex, 1);
+        }
+    } else if (delta > 0) {
+        state.cart.push({ product, quantity: 1 });
+    }
+
+    // Actualizamos la vista del carrito
+    renderCart();
+    updateCartCount();
+}
+
+        function toggleCartDrawer() {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-drawer-overlay');
+            
+            const isHidden = drawer.classList.contains('translate-x-full');
+            if (isHidden) {
+                drawer.classList.remove('translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                drawer.classList.add('translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function toggleDevModal() {
+            const modal = document.getElementById('dev-modal');
+            modal.classList.toggle('hidden');
+            updateLivePayloadPreview();
+        }
+
+        // --- 6. WHATSAPP PAYLOAD BUILDER & SECURITY SANITIZATION ---
+        function buildWhatsAppMessage() {
+            if (state.cart.length === 0) return "El carrito está vacío.";
+
+            const rawName = document.getElementById('cust-name').value || 'Cliente';
+            const rawDelivery = document.getElementById('cust-delivery').value;
+            const rawAddress = document.getElementById('cust-notas').value || 'Sin notas adicionales';
+            const ubicacion = document.getElementById('ubicacion-link')?.value.trim();
+
+            // Sanitize all inputs to prevent injection attacks
+            const cleanName = sanitizeHTML(rawName);
+            const cleanDelivery = sanitizeHTML(rawDelivery);
+            const cleanAddress = sanitizeHTML(rawAddress);
+            const cleanUbicacion = sanitizeHTML(ubicacion);
+
+            const totalPrice = state.cart.reduce((sum, item) => sum + (item.product.precio * item.quantity), 0);
+
+            let message = `🍔 *NUEVO PEDIDO - Pausanti Burgers*\n`;
+            message += `------------------------------------\n`;
+            message += `👤 *Cliente:* ${cleanName}\n`;
+            message += `🛵 *Modalidad:* ${cleanDelivery}\n`;
+            message += `📝 *Notas:* ${cleanAddress}\n\n`;
+            message += `📍 *Ubicación:* ${cleanUbicacion || 'No especificada'}\n\n`;
+            message += `🛍️ *DETALLE DEL PEDIDO:*\n`;
+
+            state.cart.forEach(item => {
+                const sub = item.product.precio * item.quantity;
+                message += `• ${item.quantity}x ${item.product.nombre} (${formatCurrency(sub)})\n`;
+            });
+
+            message += `\n💰 *TOTAL ESTIMADO:* ${formatCurrency(totalPrice)}\n`;
+            message += `------------------------------------\n`;
+            message += `_Mensaje generado automáticamente desde la web de Pausanti Burgers._`;
+
+            return message;
+        }
+// gps function 
+
+     function obtenerUbicacionGPS() {
+  const inputUbicacion = document.getElementById('ubicacion-link');
+  const estadoGps = document.getElementById('estado-gps');
+  const btnGps = document.getElementById('btn-obtener-gps');
+
+  if (!navigator.geolocation) {
+    estadoGps.textContent = 'Tu navegador no soporta geolocalización.';
+    return;
+  }
+
+  estadoGps.textContent = 'Obteniendo coordenadas...';
+  btnGps.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    (posicion) => {
+      const lat = posicion.coords.latitude;
+      const lng = posicion.coords.longitude;
+      // Genera el link estándar de Google Maps con el pin exacto
+      const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+      
+      inputUbicacion.value = mapsUrl;
+      estadoGps.textContent = '✅ Ubicación cargada correctamente.';
+      estadoGps.style.color = 'green';
+      btnGps.disabled = false;
+    },
+    (error) => {
+      estadoGps.textContent = 'No se pudo obtener el GPS. Revisa los permisos o escribe tu dirección.';
+      estadoGps.style.color = '#d9534f';
+      btnGps.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+
+        function updateLivePayloadPreview() {
+            const previewTextarea = document.getElementById('live-payload-preview');
+            if (previewTextarea) {
+                previewTextarea.value = buildWhatsAppMessage();
+            }
+        }
+
+        function renderFeaturedProduct() {
+  if (!PRODUCTS || PRODUCTS.length === 0) return;
+
+  // Buscamos específicamente la Torta Red Velvet o tomamos el primer producto disponible
+  const featured = PRODUCTS.find(p => p.nombre && p.nombre.toLowerCase().includes("hamburguesa americana")) || PRODUCTS[0];
+
+  if (!featured) return;
+
+  // Seleccionamos los elementos del DOM en el banner
+  const imgEl = document.getElementById('featured-img');
+  const titleEl = document.getElementById('featured-title');
+  const descEl = document.getElementById('featured-desc');
+  const priceEl = document.getElementById('featured-price');
+  const addBtn = document.getElementById('featured-add-btn');
+
+  // Inyectamos los datos reales provenientes de Supabase
+  if (imgEl) imgEl.src = featured.imagen_url || featured.imagen || 'https://via.placeholder.com/400x300';
+  if (titleEl) titleEl.textContent = featured.nombre;
+  if (descEl) descEl.textContent = featured.descripcion || '';
+  if (priceEl) priceEl.textContent = formatCurrency(featured.precio);
+  
+  // Vinculamos el botón para que agregue el producto real al carrito
+  if (addBtn) {
+    addBtn.onclick = () => quickAdd(featured.id);
+  }
+}
+
+
+
+const CONFIG = {
+    exigirUbicacion: true // Cambia a false si en algún momento quieres que no sea obligatoria
+};
+
+function handleSendWhatsApp(e) {
+    e.preventDefault();
+
+    // 1. VALIDAR HORARIO PRIMERO QUE TODO
+    const estado = comprobarEstadoTienda();
+    if (!estado.abierto) {
+        alert(`¡Lo sentimos! El local se encuentra cerrado en este momento. Nuestro horario de atención es de ${CONFIG_HORARIO.horaApertura}:00 a ${CONFIG_HORARIO.horaCierre}:00 hs.`);
+        return; // ⛔ Esto frena el envío y no abre WhatsApp si está cerrado
+    }
+
+    // 2. Validar que el carrito no esté vacío
+    if (state.cart.length === 0) {
+        alert("Por favor agrega al menos un producto a tu pedido antes de enviar.");
+        return;
+    }
+
+    if (state.cart.length === 0) {
+        alert("Por favor agrega al menos un producto a tu pedido antes de enviar.");
+        return;
+    }
+
+    // 1. Capturar los valores usando los ID exactos de tu HTML
+    const nameInput = document.getElementById('cust-name');
+    const deliverySelect = document.getElementById('cust-delivery');
+    const datetimeInput = document.getElementById('cust-time');
+    const notesInput = document.getElementById('cust-notas');
+
+    const customerName = nameInput ? nameInput.value.trim() : '';
+    const deliveryType = deliverySelect ? deliverySelect.value : '';
+    const deliveryTime = datetimeInput ? datetimeInput.value.trim() : '';
+    const notes = notesInput ? notesInput.value.trim() : '';
+
+    // 2. Validar Nombre
+    if (!customerName) {
+        alert("Por favor, ingresa tu nombre completo.");
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    // 1. Capturar el método de entrega (ajusta 'cust-delivery' por el ID real de tu select o input en el HTML)
+const selectMetodo = document.getElementById('cust-delivery'); 
+const metodoSeleccionado = selectMetodo ? selectMetodo.value : '';
+
+// 2. Tu código actual de la ubicación (que ya está perfecto)
+const locationInput = document.getElementById('ubicacion-link'); 
+const customerLocation = locationInput ? locationInput.value.trim() : '';
+
+if (CONFIG.exigirUbicacion && metodoSeleccionado === 'Delivery / Envíos' && !customerLocation) {
+    alert("Por favor, ingresa tu ubicación para el envío a domicilio.");
+    if (locationInput) locationInput.focus();
+    return; // Frena el envío
+}
+
+   
+
+  
+
+    // 5. Construir y enviar el mensaje a WhatsApp
+    const phone = "595974526787"; // Tu número de WhatsApp configurado
+    const fullMessage = buildWhatsAppMessage(); 
+    const encodedMessage = encodeURIComponent(fullMessage);
+    
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    // 6. Limpieza post-envío: vaciar carrito, actualizar UI y resetear formulario
+    state.cart = []; // Vaciamos el array del carrito
+    
+    // Si tienes una función general para renderizar/actualizar el carrito en pantalla, la llamamos:
+    if (typeof updateCartUI === 'function') {
+        updateCartUI();
+    } else if (typeof renderCart === 'function') {
+        renderCart(); // Por si tu función se llama renderCart en lugar de updateCartUI
+    }
+
+    // Limpiar y resetear los campos del formulario de checkout
+    const checkoutForm = document.getElementById('whatsapp-checkout-form');
+    if (checkoutForm) {
+        checkoutForm.reset();
+    }
+
+
+}
+
+
+
+// Actualizar también el selector del listener en vivo para que coincida con tus ID:
+document.querySelectorAll('#whatsapp-checkout-form input, #whatsapp-checkout-form select').forEach(element => {
+    element.addEventListener('input', updateLivePayloadPreview);
+});
+
+// Función para alternar el estado del campo de ubicación según la modalidad
+function configurarModoEntrega() {
+    const selectModalidad = document.getElementById('cust-delivery'); // El selector de Delivery / Retiro
+    const inputUbicacion = document.getElementById('ubicacion-link'); // El input del GPS/Maps
+    const btnGps = document.getElementById('btn-obtener-gps'); // El botón de GPS que hicimos antes
+    const grupoUbicacion = document.getElementById('grupo-ubicacion'); // Contenedor visual opcional (si no existe, no rompe)
+
+    if (!selectModalidad || !inputUbicacion) return; // Por seguridad si la página aún no lo carga
+
+    // Detectamos qué opción eligió el usuario (asumimos que el valor es 'retiro' o similar)
+    const esRetiro = selectModalidad.value.trim() === 'Retiro en Local';
+   
+
+    if (esRetiro) {
+        // Si es retiro del local: deshabilitamos, limpiamos y opcionalmente ocultamos
+        inputUbicacion.value = '';
+        inputUbicacion.disabled = true;
+        inputUbicacion.placeholder = 'No requerido para retiro en local';
+        if (btnGps) btnGps.disabled = true;
+        if (grupoUbicacion) grupoUbicacion.style.opacity = '0.5'; // Efecto visual de deshabilitado
+    } else {
+        // Si es delivery: habilitamos todo de nuevo
+        inputUbicacion.disabled = false;
+        inputUbicacion.placeholder = 'Pega un link de Maps o usa el botón GPS';
+        if (btnGps) btnGps.disabled = false;
+        if (grupoUbicacion) grupoUbicacion.style.opacity = '1';
+    }
+}
+
+// Escuchamos cuando el usuario cambia la opción en el selector
+document.getElementById('cust-delivery')?.addEventListener('change', configurarModoEntrega);
+
+// Ejecutamos una vez al cargar la página por si hay una opción por defecto
+window.addEventListener('DOMContentLoaded', configurarModoEntrega);
+
+
+
+
+
+//funcion actualizar automáticamente la barra superior en el Frontend horarios
+
+const CONFIG_HORARIO = {
+    activo: true,          // Ponlo en 'false' si un día quieres forzar que esté abierto
+    horaApertura: 18,       // 18:00 hs
+    horaCierre: 2         // 02:00 hs (ajusta aquí si el cierre real es a las 02:00 o a las 18:00 como indica tu barra))
+};
+
+
+
+function comprobarEstadoTienda() {
+    if (!CONFIG_HORARIO.activo) return { abierto: true, mensaje: "Abierto (Modo manual)" };
+
+    const ahora = new Date();
+    const horaActual = ahora.getHours();
+    const minutosActuales = ahora.getMinutes();
+    
+    // Convertir todo a minutos para una comparación exacta
+    const minutosTotales = horaActual * 60 + minutosActuales;
+    const minutosApertura = CONFIG_HORARIO.horaApertura * 60;
+    const minutosCierre = CONFIG_HORARIO.horaCierre * 60;
+
+    // Manejo por si cruza la medianoche (ej: abre a las 18:00 y cierra a las 02:00 de la madrugada)
+    let estaAbierto = false;
+    if (minutosApertura < minutosCierre) {
+        estaAbierto = minutosTotales >= minutosApertura && minutosTotales < minutosCierre;
+    } else {
+        // Horario nocturno que cruza las 12 de la noche
+        estaAbierto = minutosTotales >= minutosApertura || minutosTotales < minutosCierre;
+    }
+
+    return {
+        abierto: estaAbierto,
+        horarioTexto: `Lun - Dom: ${String(CONFIG_HORARIO.horaApertura).padStart(2, '0')}:00 - ${String(CONFIG_HORARIO.horaCierre).padStart(2, '0')}:00`
+    };
+}
+
+
+function actualizarBarraEstado() {
+    const estado = comprobarEstadoTienda();
+    const barraBanner = document.getElementById('banner-horario');
+    const btnWhatsApp = document.getElementById('submit-btn'); // Asegúrate de poner este ID en tu botón de WhatsApp
+
+    if (!barraBanner) return;
+
+    if (estado.abierto) {
+        barraBanner.className = "bg-rosewood text-amber-100 text-xs py-2 px-4 text-center font-medium tracking-wide flex justify-between items-center";
+        barraBanner.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Atendiendo hoy hasta las ${CONFIG_HORARIO.horaCierre}:00 hs • Envíos Express & Retiro en Local</span>
+            </div>
+        `;
+        if (btnWhatsApp) {
+            btnWhatsApp.disabled = false;
+            btnWhatsApp.classList.remove("opacity-50", "cursor-not-allowed");
+            btnWhatsApp.innerText = "Enviar Pedido por WhatsApp";
+        }
+    } else {
+        barraBanner.className = "bg-red-900 text-amber-100 text-xs py-2 px-4 text-center font-medium tracking-wide flex justify-between items-center";
+        barraBanner.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-red-400"></span>
+                <span>Local Cerrado • Nuestro horario es de ${CONFIG_HORARIO.horaApertura}:00 a ${CONFIG_HORARIO.horaCierre}:00 hs</span>
+            </div>
+        `;
+        if (btnWhatsApp) {
+            btnWhatsApp.disabled = true;
+            btnWhatsApp.classList.add("opacity-50", "cursor-not-allowed");
+            btnWhatsApp.innerText = "🔒 Local Cerrado (Fuera de horario)";
+        }
+    }
+}
+
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    actualizarBarraEstado();
+});
+
+
+
+
+        // --- 7. INITIALIZATION ON WINDOW LOAD ---
+        window.onload = function() {
+            renderCategories();
+            renderProducts();
+            renderCart();
+        };
+    </script>
+</body>
+</html>
